@@ -1,0 +1,52 @@
+name: Check if branch is up-to-date
+description: Check if Pull Request branch is up-to-date with the base branch
+inputs:
+  head-ref:
+    description: Head branch name
+    required: true
+    type: string
+  base-ref:
+    description: Base branch name
+    required: true
+    type: string
+  fail:
+    description: If true will fail if branch is not up-to-date
+    required: false
+    default: false
+    type: boolean
+outputs:
+  result:
+    description: Truth value whether there the branch is up-to-date or not
+    value: ${{ steps.check.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - name: Check branch
+      uses: actions/github-script@v6
+      id: check
+      with:
+        result-encoding: string
+        script: |
+          base_head = "${{ inputs.base-ref }}...${{ inputs.head-ref }}"
+          // Get reviews from the GitHub API.
+          const compare = await github.request('GET /repos/{owner}/{repo}/compare/{base_head}', {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            base_head: base_head
+          });
+          
+          behind = compare.data.behind_by
+          if (behind == 0) {
+            return true
+          }
+          else {
+            msg = `The head branch of the Pull Request is behind the base branch by ${behind} commit(s)!`
+            if (${{ inputs.fail }}) {
+              core.setFailed(msg)
+            }
+            else {
+              console.log(msg)            
+            }
+            
+            return false        
+          }
