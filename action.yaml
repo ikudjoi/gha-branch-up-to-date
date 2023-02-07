@@ -35,13 +35,12 @@ runs:
             base_head: base_head
           });
           
-          console.log(compare);
-          behind = compare.data.behind_by
-          if (behind == 0) {
+          diff_files_count = compare.data.files.length
+          if (diff_files_count == 0) {
             return true
           }
           else {
-            msg = `The head branch of the Pull Request is behind the base branch by ${behind} commit(s)!`
+            msg = `The head branch of the Pull Request is not in sync with the base branch!`
             if (${{ inputs.fail }}) {
               core.setFailed(msg)
             }
