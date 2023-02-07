@@ -5,8 +5,8 @@ inputs:
     description: Head branch name
     required: true
     type: string
-  base-ref:
-    description: Base branch name
+  merge-commit-sha:
+    description: GitHub test merge commit SHA
     required: true
     type: string
   fail:
@@ -27,7 +27,7 @@ runs:
       with:
         result-encoding: string
         script: |
-          base_head = "${{ inputs.base-ref }}...${{ inputs.head-ref }}"
+          base_head = "${{ inputs.head-ref }}...${{ inputs.merge-commit-sha }}"
           // Get reviews from the GitHub API.
           const compare = await github.request('GET /repos/{owner}/{repo}/compare/{base_head}', {
             owner: context.repo.owner,
@@ -35,17 +35,17 @@ runs:
             base_head: base_head
           });
           
-          behind = compare.data.behind_by
-          if (behind == 0) {
+          diff_files_count = compare.data.files.length
+          if (diff_files_count == 0) {
             return true
           }
           else {
-            msg = `The head branch of the Pull Request is behind the base branch by ${behind} commit(s)!`
+            msg = `The head branch of the Pull Request is not in sync with the base branch!`
             if (${{ inputs.fail }}) {
               core.setFailed(msg)
             }
             else {
-              console.log(msg)            
+              console.log(msg)
             }
             
             return false        
