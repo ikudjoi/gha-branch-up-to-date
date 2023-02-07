@@ -5,8 +5,8 @@ inputs:
     description: Head branch name
     required: true
     type: string
-  base-ref:
-    description: Base branch name
+  merge-commit-sha:
+    description: GitHub test merge commit SHA
     required: true
     type: string
   fail:
@@ -27,7 +27,7 @@ runs:
       with:
         result-encoding: string
         script: |
-          base_head = "${{ inputs.base-ref }}...${{ inputs.head-ref }}"
+          base_head = "${{ inputs.head-ref }}...${{ inputs.merge-commit-sha }}"
           // Get reviews from the GitHub API.
           const compare = await github.request('GET /repos/{owner}/{repo}/compare/{base_head}', {
             owner: context.repo.owner,
@@ -35,6 +35,7 @@ runs:
             base_head: base_head
           });
           
+          console.log(compare);
           behind = compare.data.behind_by
           if (behind == 0) {
             return true
@@ -45,7 +46,7 @@ runs:
               core.setFailed(msg)
             }
             else {
-              console.log(msg)            
+              console.log(msg)
             }
             
             return false        
